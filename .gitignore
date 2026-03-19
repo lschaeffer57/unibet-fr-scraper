@@ -7,3 +7,8 @@ __pycache__/
 output.json
 unibet_all.json
 *_raw.json
+
+# OpenVPN NordVPN (ne jamais committer)
+nordvpn.auth
+**/nordvpn.auth
+*.ovpn

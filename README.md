@@ -21,7 +21,7 @@ UNIBET_USE_TOR=1 python unibet_all_json.py
 
 **NordVPN sur VPS** — deux cas :
 
-1. **VPN au niveau du système** (`nordvpn connect`, WireGuard, etc.) : tout le trafic du serveur sort déjà par NordVPN → lance le script **sans** variable ; si ça ne sort pas par le VPN, vérifie le **split tunneling**, ou que le script ne tourne pas dans un **conteneur** avec son propre réseau (Docker : `network_mode: host` sur l’hôte où NordVPN est actif, ou route manuelle).
+1. **VPN au niveau du système** (recommandé sur VPS) : OpenVPN avec le `.ovpn` Nord + **identifiants de service** — guide pas à pas : **[docs/vps-nordvpn-openvpn.md](docs/vps-nordvpn-openvpn.md)**. Une fois `openvpn-client@…` **actif**, lance le scraper **sans** variable proxy. Autre option : appli Nord **`nordvpn connect`** / WireGuard si tu les as configurés sur la même machine. **Docker** : le conteneur voit souvent un réseau séparé → utiliser `network_mode: host`, ou installer le VPN **dans** l’image, ou passer par SOCKS (`UNIBET_SOCKS_PROXY`).
 2. **Proxy SOCKS NordVPN (recommandé si le scraper est isolé réseau)** : dans l’espace client NordVPN, active les identifiants **SOCKS5** / serveur proxy. Puis soit une URL complète, soit des variables séparées (mot de passe avec caractères spéciaux pris en charge) :
 
 ```bash
