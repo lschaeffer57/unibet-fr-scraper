@@ -19,6 +19,9 @@ python unibet_all_json.py --pretty   # JSON indenté
 3. Variables optionnelles :
    - `OUTPUT_PATH` (défaut `/app/output.json`)
    - `SCRAPE_INTERVAL_SECONDS` : `0` = un run puis arrêt ; `3600` = scrape toutes les heures en boucle.
+   - **`HTTPS_PROXY` / `HTTP_PROXY`** : si tu vois des **HTTP 403** sur `zones/v3/sportnode/markets.json`, c’est souvent le **WAF / anti-bot** qui bloque les IP de datacenter (Railway, AWS, etc.). Le client HTTP utilise `trust_env=True` : défini un proxy **résidentiel ou mobile** (FR de préférence), par ex. `HTTPS_PROXY=http://user:pass@host:port`.
+
+Avant la première requête API, une visite de `https://www.unibet.fr/` récupère les cookies usuel du site ; sans proxy, le blocage peut malgré tout persister depuis le cloud.
 
 Le fichier JSON est produit **dans le conteneur** ; pour l’exploiter ailleurs, ajoute upload (S3, webhook, etc.) selon ton flux.
 

@@ -22,6 +22,7 @@ import pytz
 import re
 
 from unibet_event_link import link_from_event_payload
+from unibet_http import UNIBET_REQUEST_HEADERS, unibet_connector, warm_unibet_session
 
 # --- DataFrames (spec tennis + extra utile) ---
 OUJEUSet1 = pd.DataFrame(columns=['nom du match', 'date du match', 'tournoi', 'lien', 'cut', 'over', 'under'])
@@ -205,19 +206,7 @@ def calculate_odd(selection):
 
 async def fetch(session, url):
     try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Referer': 'https://www.unibet.fr/',
-            'Origin': 'https://www.unibet.fr',
-            'Connection': 'keep-alive',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin'
-        }
-        async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
+        async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as response:
             response.raise_for_status()
             return await response.text()
     except aiohttp.ClientResponseError as e:
@@ -313,17 +302,14 @@ async def run_scrape():
 
     url = f"https://www.unibet.fr/zones/v3/sportnode/markets.json?nodeId={UNIBET_SPORT_NODE_ID}&filter=Top%2520Paris&marketname=Vainqueur%2520du%2520match"
 
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Referer': 'https://www.unibet.fr/',
-        'Origin': 'https://www.unibet.fr'
-    }
-    connector = aiohttp.TCPConnector(limit=64, limit_per_host=24, ttl_dns_cache=600)
+    connector = unibet_connector()
     async with aiohttp.ClientSession(
-        headers=headers, connector=connector, timeout=aiohttp.ClientTimeout(total=30)
+        headers=UNIBET_REQUEST_HEADERS,
+        connector=connector,
+        timeout=aiohttp.ClientTimeout(total=30),
+        trust_env=True,
     ) as session:
+        await warm_unibet_session(session)
         response = await fetch(session, url)
         if response is None:
             print("Impossible de récupérer les données initiales")
