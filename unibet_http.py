@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 from urllib.parse import quote
 
@@ -45,6 +46,7 @@ async def warm_unibet_session(session: aiohttp.ClientSession) -> None:
             "https://www.unibet.fr/",
             headers=h,
             allow_redirects=True,
+            proxy=aiohttp_per_request_proxy(),
             timeout=aiohttp.ClientTimeout(total=25),
         ) as resp:
             await resp.read()
@@ -85,9 +87,42 @@ def effective_socks_proxy_url() -> str | None:
     return _nordvpn_socks_url_from_env()
 
 
+def aiohttp_per_request_proxy() -> str | None:
+    """Proxy HTTP(S) explicite (CONNECT) pour chaque GET — à utiliser sur VPS avec offre résidentielle."""
+    if effective_socks_proxy_url() is not None:
+        return None
+    p = os.environ.get("UNIBET_PROXY", "").strip() or os.environ.get("UNIBET_HTTPS_PROXY", "").strip()
+    return p or None
+
+
 def unibet_trust_env() -> bool:
-    """Désactivé dès qu’un SOCKS applicatif est utilisé (évite HTTPS_PROXY + SOCKS en double)."""
-    return effective_socks_proxy_url() is None
+    """Désactivé avec SOCKS ou proxy explicite (évite de doubler HTTPS_PROXY / variables d’env)."""
+    if effective_socks_proxy_url() is not None:
+        return False
+    if aiohttp_per_request_proxy() is not None:
+        return False
+    return True
+
+
+async def unibet_aiohttp_get(session: aiohttp.ClientSession, url: str) -> str | None:
+    """GET Unibet avec gestion d’erreurs homogène (utilisé par les scrapers async)."""
+    try:
+        async with session.get(
+            url,
+            proxy=aiohttp_per_request_proxy(),
+            timeout=aiohttp.ClientTimeout(total=30),
+        ) as response:
+            response.raise_for_status()
+            return await response.text()
+    except aiohttp.ClientResponseError as e:
+        print(f"Erreur HTTP {e.status} lors de la récupération de {url}: {e.message}")
+        return None
+    except asyncio.TimeoutError:
+        print(f"Timeout lors de la récupération de {url}")
+        return None
+    except Exception as e:
+        print(f"Erreur lors de la récupération de {url}: {e}")
+        return None
 
 
 def unibet_connector() -> BaseConnector:
