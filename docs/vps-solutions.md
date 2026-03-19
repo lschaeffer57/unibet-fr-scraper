@@ -10,14 +10,18 @@ python -m playwright install chromium   # une fois
 UNIBET_USE_PLAYWRIGHT=1 python unibet_all_json.py
 ```
 
+Comportement aligné sur **Unibet.PDF (V120)** : une seule page, `chromium.launch(headless=…)` sans args par défaut, `new_context(user_agent=Chrome/123 Windows)`, puis `goto /sport`, `mouse.move(100,100)`, `sleep(2)`, et **`fetch(url)` → `r.json()`** sur cette page (sérialisé en texte pour Python).
+
 Variables utiles :
 
 | Variable | Défaut | Rôle |
 |----------|--------|------|
+| `UNIBET_PLAYWRIGHT_UA` | Chrome **123** Windows (comme le PDF) | User-Agent |
 | `UNIBET_PLAYWRIGHT_HEADLESS` | `1` | `0` pour déboguer avec fenêtre |
-| `UNIBET_PLAYWRIGHT_WARMUP_SLEEP` | `2` | Pause après chargement de /sport |
-| `UNIBET_PLAYWRIGHT_CONCURRENCY` | `10` | Pages parallèles pour `event.json` |
-| `UNIBET_PLAYWRIGHT_PROXY` | — | Proxy HTTP pour Chromium, ex. `http://host:port` (optionnel) |
+| `UNIBET_PLAYWRIGHT_WARMUP_SLEEP` | `2` | Comme le PDF |
+| `UNIBET_PLAYWRIGHT_LOCALE_FR` | désactivé | `1` = réactiver `locale=fr-FR` + fuseau Paris (hors PDF) |
+| `UNIBET_PLAYWRIGHT_CHROMIUM_ARGS` | — | args séparés par des virgules, ex. `--disable-blink-features=AutomationControlled` |
+| `UNIBET_PLAYWRIGHT_PROXY` | — | Proxy HTTP pour Chromium |
 
 **Docker / CI** : l’image installe Chromium (voir `Dockerfile`). Sur un VPS nu, installe les deps système comme pour Playwright ou utilise l’image construite à partir du repo.
 
